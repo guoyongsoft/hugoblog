@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+
+
+
+
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>ggguo</title>
+        <link>https://47.93.123.60/blog/</link>
+        <description>一个技术博客</description>
+        <generator>Hugo 0.82.0 https://gohugo.io/</generator>
+        
+            <language>zh-CN</language>
+        
+        
+            <managingEditor>guoyongsoft@163.com (ggguo)</managingEditor>
+        
+        
+            <webMaster>guoyongsoft@163.com (ggguo)</webMaster>
+        
+        
+            <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+        
+        <lastBuildDate>Sat, 27 Mar 2021 19:17:43 &#43;0800</lastBuildDate>
+        
+            <atom:link rel="self" type="application/rss&#43;xml" href="https://47.93.123.60/blog/rss.xml" />
+        
+        
+            <item>
+                <title>Curator - 管理你的 Elasticsearch 索引</title>
+                <link>https://47.93.123.60/blog/posts/jishu/curator/</link>
+                <guid isPermaLink="true">https://47.93.123.60/blog/posts/jishu/curator/</guid>
+                <pubDate>Sat, 27 Mar 2021 00:43:33 &#43;0800</pubDate>
+                
+                    <author>guoyongsoft@163.com (ggguo)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;欢迎在文末留言，共同进步。&lt;/li&gt;
+&lt;li&gt;本文采用署名 - 非商业性使用 - 相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 许可协议，转载请注明出处！&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;准备工作&#34;&gt;准备工作&lt;/h2&gt;
+&lt;p&gt;我这里以 CentOS 7 为例来进行说明。&lt;/p&gt;
+&lt;h3 id=&#34;安装&#34;&gt;安装&lt;/h3&gt;
+&lt;p&gt;官方推荐最简单的安装方式就是使用 &lt;code&gt;pip&lt;/code&gt;，没错，这货是 &lt;code&gt;python&lt;/code&gt; 写的。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;最简化安装的 CentOS，虽然自带了 &lt;code&gt;python&lt;/code&gt;，但是没有相关头文件，无法安装 &lt;code&gt;pip&lt;/code&gt;，干脆编译安装 &lt;code&gt;python3&lt;/code&gt;。既然要编译，先装个开发工具包再说&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;yum -y groupinstall &#39;Development Tools&#39;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;编译 &lt;code&gt;python3&lt;/code&gt;，一定要注意 &lt;code&gt;OpenSSL&lt;/code&gt; 支持是不是启用了，否则后面没办法下载各种包了，还需要这些依赖，不安装会报错的（都是试错过后的总结，都是眼泪😢）&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;yum -y install openssl openssl-devel zlib zlib-devel libffi-devel
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;下载 &lt;code&gt;python3&lt;/code&gt; 的源码包，然后解压编译并执行 &lt;code&gt;configure&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# 下载解压
+wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz
+tar -Jxf Python-3.7.3.tar.xz
+cd Python-3.7.3/
+# 执行配置
+./configure
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;执行完 &lt;code&gt;configure&lt;/code&gt; 后，注意看 &lt;code&gt;OpenSSL&lt;/code&gt; 支持是不是启用了。如图是成功启用的。
+&lt;a href=&#34;https://www.wdmcheng.cn/Curator-%E7%AE%A1%E7%90%86%E4%BD%A0%E7%9A%84Elasticsearch%E7%B4%A2%E5%BC%95/OpenSSL.png&#34;&gt;&lt;img src=&#34;https://gitee.com/guoyongsoft/image/raw/master/img/20210326164046.png&#34; alt=&#34;包含 OpenSSL 支持&#34;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.wdmcheng.cn/Curator-%E7%AE%A1%E7%90%86%E4%BD%A0%E7%9A%84Elasticsearch%E7%B4%A2%E5%BC%95/OpenSSL.png&#34;&gt;包含 OpenSSL 支持&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;后面编译安装&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;make
+make install
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;这个时候没有 &lt;code&gt;pip&lt;/code&gt; 命令，只有 &lt;code&gt;pip3&lt;/code&gt;。不用别名处理了，顺手更新一下 &lt;code&gt;pip&lt;/code&gt; 版本，也会自动安装 &lt;code&gt;pip&lt;/code&gt; 这个命令&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;pip3 install --upgrade pip
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;进入正题，安装 &lt;code&gt;curator&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;pip3 install elasticsearch-curator
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;配置&#34;&gt;配置&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;执行 &lt;code&gt;curator&lt;/code&gt; 命令时，默认读取的配置文件在 &lt;code&gt;~/.curator/curator.yml&lt;/code&gt;。创建配置文件，内容如下&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;---
+# Remember, leave a key empty if there is no value.  None will be a string,
+# not a Python &amp;quot;NoneType&amp;quot;
+client:
+  # ES 节点列表
+  hosts:
+    - 10.0.79.14
+    - 10.0.79.22
+    - 10.0.79.23
+    - 10.0.79.24
+  port: 9200
+  url_prefix:
+  use_ssl: False
+  certificate:
+  client_cert:
+  client_key:
+  ssl_no_validate: False
+  http_auth: username:password
+  timeout: 30
+  master_only: False
+   
+logging:
+  loglevel: INFO
+  # logfile 文件路径，一定要保证文件的父级文件夹存在
+  logfile: /data/es-curator-log/es-curator.log
+  logformat: default
+  blacklist: [&#39;elasticsearch&#39;, &#39;urllib3&#39;]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;上面的 &lt;code&gt;http_auth&lt;/code&gt; 部分，是用户名和密码，用 &lt;code&gt;:&lt;/code&gt; 分隔。更多配置文件写法，参考 官方文档&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;创建任务文件，这里提供一个参考，内容如下。详细信息参考官方文档&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;---
+# Remember, leave a key empty if there is no value.  None will be a string,
+# not a Python &amp;quot;NoneType&amp;quot;
+#
+# Also remember that all examples have &#39;disable_action&#39; set to True.  If you
+# want to use this action as a template, be sure to set this to False after
+# copying it.
+actions:
+  1:
+    action: delete_indices
+    description: &amp;gt;-
+      Delete indices older than 31 days (based on index name), for -pro- indices.
+   
+      删除31天之前的 -pro- 索引
+    options:
+      ignore_empty_list: True
+      timeout_override: 300
+      continue_if_exception: True
+      disable_action: False
+    filters:
+    - filtertype: pattern
+      kind: regex
+      value: &#39;.*-pro-.*&#39;
+      exclude:
+    - filtertype: age
+      source: name
+      direction: older
+      timestring: &#39;%Y.%m.%d&#39;
+      unit: days
+      unit_count: 31
+      exclude:
+  2:
+    action: delete_indices
+    description: &amp;gt;-
+      Delete indices older than 7 days (based on index name), except -pro- indices.
+   
+      删除7天之前的非 -pro- 索引
+    options:
+      ignore_empty_list: True
+      timeout_override: 300
+      continue_if_exception: True
+      disable_action: False
+    filters:
+    - filtertype: pattern
+      kind: regex
+      value: &#39;.*-pro-.*&#39;
+      exclude: True
+    - filtertype: age
+      source: name
+      direction: older
+      timestring: &#39;%Y.%m.%d&#39;
+      unit: days
+      unit_count: 7
+      exclude:
+  3:
+    action: delete_indices
+    description: &amp;gt;-
+      Delete indices older than 3 days (based on index name), for system indices.
+   
+      删除3天之前的系统索引
+    options:
+      ignore_empty_list: True
+      timeout_override: 300
+      continue_if_exception: True
+      disable_action: False
+    filters:
+    - filtertype: pattern
+      kind: regex
+      value: &#39;^\..*-.*&#39;
+      exclude:
+    - filtertype: age
+      source: name
+      direction: older
+      timestring: &#39;%Y.%m.%d&#39;
+      unit: days
+      unit_count: 3
+      exclude:
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;现在可以使用 &lt;code&gt;--dry-run&lt;/code&gt; 参数试运行测试一下（这个参数的作用就是不会真正的去执行，只是模拟）。&lt;code&gt;--config ~/.curator/curator.yml&lt;/code&gt; 可省略&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;curator --config ~/.curator/curator.yml --dry-run ~/delete_indecies.yml
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;配置定时任务&#34;&gt;配置定时任务&lt;/h3&gt;
+&lt;p&gt;先说一下用法，后面再列几篇文章供参考&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;执行 &lt;code&gt;crontab -e&lt;/code&gt;，会自动打开 &lt;code&gt;vim&lt;/code&gt; 编辑器&lt;/li&gt;
+&lt;li&gt;我这里是每隔 6 个小时执行一次，因此添加一行 &lt;code&gt;0 0,6,12,18 * * * /usr/local/bin/curator ~/delete_indecies.yml&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;保存后大功告成&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;参考资料&#34;&gt;参考资料&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Curator 文档&lt;/li&gt;
+&lt;li&gt;crontab 参数解释&lt;/li&gt;
+&lt;li&gt;Linux 定时任务&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;------------- 本文结束感谢您的阅读 -------------&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;本文作者：&lt;/strong&gt; 雾都迷城&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;本文链接：&lt;/strong&gt; &lt;a href=&#34;https://www.wdmcheng.cn/Curator-%E7%AE%A1%E7%90%86%E4%BD%A0%E7%9A%84Elasticsearch%E7%B4%A2%E5%BC%95/&#34;&gt;https://www.wdmcheng.cn/Curator - 管理你的 Elasticsearch 索引 /&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;版权声明：&lt;/strong&gt; 本博客所有文章除特别声明外，均采用 BY-NC-SA 许可协议。转载请注明出处！&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/categories/%E6%8A%80%E6%9C%AF/">技术</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/curator/">Curator</category>
+                                
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/%E6%8A%80%E6%9C%AF/">技术</category>
+                                
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/elasticsearch/">Elasticsearch </category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>Hello</title>
+                <link>https://47.93.123.60/blog/posts/hello/</link>
+                <guid isPermaLink="true">https://47.93.123.60/blog/posts/hello/</guid>
+                <pubDate>Sat, 27 Mar 2021 18:11:48 &#43;0800</pubDate>
+                
+                    <author>guoyongsoft@163.com (ggguo)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;h2 id=&#34;hello&#34;&gt;hello&lt;/h2&gt;
+&lt;h3 id=&#34;ddd&#34;&gt;ddd&lt;/h3&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/categories/hello/">hello</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/hello/">hello</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>macOS 文件系统区分大小写的环境配置</title>
+                <link>https://47.93.123.60/blog/posts/jishu/mac/</link>
+                <guid isPermaLink="true">https://47.93.123.60/blog/posts/jishu/mac/</guid>
+                <pubDate>Thu, 31 Aug 2017 15:43:48 &#43;0800</pubDate>
+                
+                    <author>guoyongsoft@163.com (ggguo)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;h1 id=&#34;macos-文件系统区分大小写的环境配置&#34;&gt;macOS 文件系统区分大小写的环境配置&lt;/h1&gt;
+&lt;h2 id=&#34;前言&#34;&gt;前言&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;欢迎在文末留言，共同进步。&lt;/li&gt;
+&lt;li&gt;本文采用署名 - 非商业性使用 - 相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 许可协议，转载请注明出处！&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;起因&#34;&gt;起因&lt;/h2&gt;
+&lt;p&gt;macOS 的文件系统不区分大小写，但在开发编码的过程中，可能会下载到需要区分大小写的文件 ——Git 还可以通过配置控制一下，SVN 中出现这种问题的概率就不小了 —— 因此想要找到一个解决办法。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;如果将文件系统直接改成区分大小写的，又会有一些软件无法正常使用（譬如 Adobe 家的），所以不想自找麻烦。&lt;/li&gt;
+&lt;li&gt;如果对磁盘进行分区，分出一块空间专门用来开发，格式化为区分大小写的。这就会造成一定程度的磁盘空间浪费（不继续 Windows 的使用习惯了，就是不想分区），总是会很心疼的，毕竟 mac 的磁盘空间很贵。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;方案&#34;&gt;方案&lt;/h2&gt;
+&lt;p&gt;后来了解到 mac 的稀疏磁盘映像 (sparseimage) 比较不错&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;对映像文件的操作与 &lt;code&gt;dmg&lt;/code&gt; 格式相同&lt;/li&gt;
+&lt;li&gt;使用多少空间，其真实占用空间就是那么大，不会造成空间浪费。假设新建一个稀疏磁盘映像，大小为 50GB，里面存了 5GB 的代码，那么这个映像文件实际占用 5GB 存储空间&lt;/li&gt;
+&lt;li&gt;映像声明的空间不够了，还可以随时扩容。当然前提是你的物理磁盘装得下&lt;/li&gt;
+&lt;li&gt;性能几乎无损&lt;/li&gt;
+&lt;li&gt;需要备份、迁移代码库？零散文件的读写哪有单个文件快呀，直接复制磁盘映像，你的代码库就备份了&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;嗯，最后决定建一个稀疏磁盘映像，格式化成区分大小写的分区格式，来保存我的代码库&lt;/p&gt;
+&lt;h2 id=&#34;实施&#34;&gt;实施&lt;/h2&gt;
+&lt;h3 id=&#34;建立磁盘映像&#34;&gt;建立磁盘映像&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;打开磁盘工具，新建空白映像（图 1）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;其中 &lt;code&gt;存储为&lt;/code&gt; 和 &lt;code&gt;位置&lt;/code&gt; 随意，我这里是 &lt;code&gt;~/DevCaseSensitive.sparsebundle&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;下面的 &lt;code&gt;名称&lt;/code&gt; 定义的是分区名称，也就是磁盘的挂载点了&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;大小根据自身情况来填&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;格式我选的是 &lt;code&gt;APFS（区分大小写）&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;分区就单个分区就行，选择 &lt;code&gt;GUID 分区图&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;映像格式选择&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;稀疏捆绑磁盘映像
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;img src=&#34;https://gitee.com/guoyongsoft/image/raw/master/img/20210326172409.png&#34; alt=&#34;图1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;图1&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;然后就可以把代码都写入这个分区了，我这里的挂载点是 &lt;code&gt;/Volumes/DevCaseSensitive&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果你有很多项目了，又懒得一个一个去处理，用软连接吧（先学会用，注意数据安全）&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果映像空间不够了，可以扩容的&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;关闭所有使用该分区的程序&lt;/li&gt;
+&lt;li&gt;卸载该磁盘映像&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;hdiutil resize -size 50g ~/DevCaseSensitive.sparseimage&lt;/code&gt; 来修改大小&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;hdiutil attach ~/DevCaseSensitive.sparseimage&lt;/code&gt; 重新挂载磁盘映像&lt;/li&gt;
+&lt;li&gt;使用命令行或者磁盘工具调整分区大小&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;开机自动挂载&#34;&gt;开机自动挂载&lt;/h3&gt;
+&lt;p&gt;我在磁盘映像里还放了 IDE 工具（JetBrains 的 IntelliJ IDEA），而 JetBrains Toolbox 会开机自启。又由于 macOS 登录后的各程序启动都是并行的，没有先后顺序，因此不能直接将磁盘映像添加到登录项
+&lt;code&gt;LaunchDaemons&lt;/code&gt; 是在系统启动后就会执行，优先于登录项，因此这里采用这种机制&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;参考文章&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;了解 LaunchDaemons&lt;/li&gt;
+&lt;li&gt;利用 Launchd 定制 Mac 启动任务&lt;/li&gt;
+&lt;li&gt;Mac OS 启动服务优化高级篇（launchd tuning）&lt;/li&gt;
+&lt;li&gt;Mac OSX 的开机启动配置&lt;/li&gt;
+&lt;li&gt;Daemons and Agents&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;LaunchAgents&lt;/code&gt; 的目录都是登录项，不能用，&lt;code&gt;/System/Library/LaunchDaemons&lt;/code&gt; 是系统级的，一般不动，因此目录选择 &lt;code&gt;/Library/LaunchDaemons&lt;/code&gt;
+在 &lt;code&gt;/Library/LaunchDaemons&lt;/code&gt; 下新建文件 &lt;code&gt;cn.wdmcheng.sparseimage-loader.plist&lt;/code&gt;，内容如下（&lt;code&gt;xxxxx&lt;/code&gt; 是用户名）&lt;/p&gt;
+&lt;p&gt;复制&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot;?&amp;gt;
+&amp;lt;!DOCTYPE plist PUBLIC &amp;quot;-//Apple//DTD PLIST 1.0//EN&amp;quot; &amp;quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&amp;quot;&amp;gt;
+&amp;lt;plist version=&amp;quot;1.0&amp;quot;&amp;gt;
+  &amp;lt;dict&amp;gt;
+    &amp;lt;key&amp;gt;Label&amp;lt;/key&amp;gt;
+    &amp;lt;string&amp;gt;cn.wdmcheng.sparseimage-loader&amp;lt;/string&amp;gt;
+    &amp;lt;key&amp;gt;ProgramArguments&amp;lt;/key&amp;gt;
+    &amp;lt;array&amp;gt;
+       &amp;lt;string&amp;gt;hdiutil&amp;lt;/string&amp;gt;
+       &amp;lt;string&amp;gt;attach&amp;lt;/string&amp;gt;
+       &amp;lt;string&amp;gt;/Users/xxxxx/DevCaseSensitive.sparseimage&amp;lt;/string&amp;gt;
+    &amp;lt;/array&amp;gt;
+    &amp;lt;key&amp;gt;RunAtLoad&amp;lt;/key&amp;gt;
+    &amp;lt;true/&amp;gt;
+    &amp;lt;key&amp;gt;StandardErrorPath&amp;lt;/key&amp;gt;
+    &amp;lt;string&amp;gt;/dev/null&amp;lt;/string&amp;gt;
+    &amp;lt;key&amp;gt;StandardOutPath&amp;lt;/key&amp;gt;
+    &amp;lt;string&amp;gt;/dev/null&amp;lt;/string&amp;gt;
+  &amp;lt;/dict&amp;gt;
+&amp;lt;/plist&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;执行命令 &lt;code&gt;launchctl load /Library/LaunchDaemons/cn.wdmcheng.sparseimage-loader.plist&lt;/code&gt; 加载配置，重启即可生效&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;ide-配置&#34;&gt;IDE 配置&lt;/h3&gt;
+&lt;p&gt;JetBrains 家的 IDE 需要配置一个属性，来指定使用区分大小写的模式
+在 IDE 的 JVM 参数上，增加 &lt;code&gt;-Didea.case.sensitive.fs=true&lt;/code&gt; 即可
+接下来就可以正常使用啦&lt;/p&gt;
+&lt;p&gt;------------- 本文结束感谢您的阅读 -------------&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;本文作者：&lt;/strong&gt; 雾都迷城&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;本文链接：&lt;/strong&gt; &lt;a href=&#34;https://www.wdmcheng.cn/macOS%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%8C%BA%E5%88%86%E5%A4%A7%E5%B0%8F%E5%86%99%E7%9A%84%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/&#34;&gt;https://www.wdmcheng.cn/macOS 文件系统区分大小写的环境配置 /&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;版权声明：&lt;/strong&gt; 本博客所有文章除特别声明外，均采用 BY-NC-SA 许可协议。转载请注明出处！&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/categories/%E6%8A%80%E6%9C%AF/">技术</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/macos/">macOS </category>
+                                
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/%E6%8A%80%E6%9C%AF/">技术</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>MemE主题</title>
+                <link>https://47.93.123.60/blog/posts/meme/</link>
+                <guid isPermaLink="true">https://47.93.123.60/blog/posts/meme/</guid>
+                <pubDate>Fri, 27 Mar 2020 00:43:33 &#43;0800</pubDate>
+                
+                    <author>guoyongsoft@163.com (ggguo)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;h2 id=&#34;简介&#34;&gt;简介&lt;/h2&gt;
+&lt;p&gt;MemE 是一个强大且可高度定制的 &lt;a href=&#34;https://github.com/gohugoio/hugo&#34;&gt;GoHugo&lt;/a&gt; 博客主题，专为个人博客设计。MemE 主题专注于优雅、简约、现代，以及代码的正确性。同时，希望你将像欣赏一个模因一样欣赏 MemE，希望你将像分享一个模因一样分享 MemE，就像你的博客和文章所做的那样😝！&lt;/p&gt;
+&lt;h2 id=&#34;预览&#34;&gt;预览&lt;/h2&gt;
+&lt;h3 id=&#34;浏览器支持&#34;&gt;浏览器支持&lt;/h3&gt;
+&lt;p&gt;MemE 广泛地使用了 &lt;a href=&#34;https://developer.mozilla.org/en-US/docs/Web/CSS/Using_CSS_custom_properties&#34;&gt;CSS 变量&lt;/a&gt;和 &lt;a href=&#34;https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let&#34;&gt;let 声明&lt;/a&gt;。这些特性被以下浏览器所支持：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Chrome 49+&lt;/li&gt;
+&lt;li&gt;Firefox 44+&lt;/li&gt;
+&lt;li&gt;Edge 15+&lt;/li&gt;
+&lt;li&gt;Opera 36+&lt;/li&gt;
+&lt;li&gt;Safari 10+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;IE（Internet Explorer）浏览器不支持 CSS 变量。&lt;/p&gt;
+&lt;h2 id=&#34;快速开始&#34;&gt;快速开始&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://gohugo.io/getting-started/quick-start/&#34;&gt;https://gohugo.io/getting-started/quick-start/&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&#34;安装-hugoextended-扩展版&#34;&gt;安装 Hugo（&lt;code&gt;extended&lt;/code&gt; 扩展版）&lt;/h3&gt;
+&lt;p&gt;对于 Arch Linux 的用户：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~ $ sudo pacman -S hugo
+~ $ hugo new site blog
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;对于其它系统的用户，请查看：https://gohugo.io/getting-started/installing/&lt;/p&gt;
+&lt;h3 id=&#34;安装-meme&#34;&gt;安装 MemE&lt;/h3&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;3
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~ $ &lt;span class=&#34;nb&#34;&gt;cd&lt;/span&gt; blog
+~/blog $ git init
+~/blog $ git submodule add --depth &lt;span class=&#34;m&#34;&gt;1&lt;/span&gt; https://github.com/reuixiy/hugo-theme-meme.git themes/meme
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h3 id=&#34;开始写作&#34;&gt;开始写作&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;将 &lt;code&gt;config.toml&lt;/code&gt; 替换为&lt;a href=&#34;https://github.com/reuixiy/hugo-theme-meme/blob/master/config-examples/zh-cn/config.toml&#34;&gt;示例配置&lt;/a&gt;。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~/blog $ rm config.toml &lt;span class=&#34;o&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; cp themes/meme/config-examples/zh-cn/config.toml config.toml
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;新建一篇文章和一个关于页面：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;2
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~/blog $ hugo new &lt;span class=&#34;s2&#34;&gt;&amp;#34;posts/hello-world.md&amp;#34;&lt;/span&gt;
+~/blog $ hugo new &lt;span class=&#34;s2&#34;&gt;&amp;#34;about/_index.md&amp;#34;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;现在：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~/blog $ hugo server -D
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;定制-meme&#34;&gt;定制 MemE&lt;/h2&gt;
+&lt;p&gt;MemE 通过 Hugo 管道实现使用 SCSS 生成 CSS，而非静态的 CSS 文件，同时提供一个 &lt;a href=&#34;https://github.com/reuixiy/hugo-theme-meme/blob/master/assets/scss/custom/_custom.scss&#34;&gt;&lt;code&gt;_custom.scss&lt;/code&gt;&lt;/a&gt; 文件以供用户定制。&lt;/p&gt;
+&lt;p&gt;直接新建一个 &lt;code&gt;~/blog/assets/scss/custom/_custom.scss&lt;/code&gt; 并将你自己的样式加入其中，就能覆盖主题的 &lt;code&gt;~/blog/themes/meme/assets/scss/custom/_custom.scss&lt;/code&gt; 文件，且其会正确地被应用。&lt;/p&gt;
+&lt;p&gt;事实上，在 Hugo 中你可以覆盖主题的任何模板，见这个非官方的镜像网页：&lt;a href=&#34;https://gohugobrasil.netlify.com/themes/customizing/&#34;&gt;https://gohugobrasil.netlify.com/themes/customizing/&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&#34;更新-meme&#34;&gt;更新 MemE&lt;/h2&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~/blog $ git submodule update --rebase --remote
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;如果失败了，请尝试：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;删除 &lt;code&gt;meme&lt;/code&gt; 文件夹，比如&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~/blog $ rm -rf themes/meme
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;重新克隆 MemE&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt;1
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-sh&#34; data-lang=&#34;sh&#34;&gt;~/blog $ git clone --depth &lt;span class=&#34;m&#34;&gt;1&lt;/span&gt; https://github.com/reuixiy/hugo-theme-meme.git themes/meme
+&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;特别注意&lt;/strong&gt;：MemE 主题有时会新增一些全新功能或一些毁灭改动，所以在你更新完后，请务必检查 &lt;a href=&#34;https://github.com/reuixiy/hugo-theme-meme/commits/master/config-examples&#34;&gt;&lt;code&gt;config.toml&lt;/code&gt; 的改动历史&lt;/a&gt;并将相应内容也更新！&lt;/p&gt;
+&lt;h2 id=&#34;awesome-meme&#34;&gt;Awesome MemE&lt;/h2&gt;
+&lt;p&gt;请看 &lt;a href=&#34;https://github.com/reuixiy/hugo-theme-meme/issues/2&#34;&gt;#2&lt;/a&gt;。&lt;/p&gt;
+&lt;h2 id=&#34;支持的-front-matter&#34;&gt;支持的 Front Matter&lt;/h2&gt;
+&lt;p&gt;请看 &lt;a href=&#34;https://github.com/reuixiy/hugo-theme-meme#supported-front-matter&#34;&gt;https://github.com/reuixiy/hugo-theme-meme#supported-front-matter&lt;/a&gt;。&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/categories/%E5%85%B6%E4%BB%96/">其他</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="https://47.93.123.60/blog/tags/%E5%85%B6%E4%BB%96/">其他</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+    </channel>
+</rss>
