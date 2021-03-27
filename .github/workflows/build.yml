@@ -16,7 +16,9 @@ jobs:
       uses: guoyongsoft/hugo-deploy@v1
       env:
         DEPLOY_REPO: guoyongsoft/guoyongsoft.github.io
-        DEPLOY_BRANCH: build
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        DEPLOY_BRANCH: master
+        GITHUB_ACTOR: guoyongsoft
+        GITHUB_REPOSITORY: guoyongsoft/hugoblog
+        DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
         # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
         TZ: Asia/Shanghai
