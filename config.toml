@@ -1,7 +1,7 @@
 ##########################################
 # 站点配置
 
-baseURL = "https://47.93.123.60/blog/"
+baseURL = "https://blog.ggguo.cn/"
 title = "ggguo"
 languageCode = "zh-CN"
 hasCJKLanguage = true
