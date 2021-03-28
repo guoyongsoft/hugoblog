@@ -104,6 +104,21 @@ MemE 通过 Hugo 管道实现使用 SCSS 生成 CSS，而非静态的 CSS 文件
 
 **特别注意**：MemE 主题有时会新增一些全新功能或一些毁灭改动，所以在你更新完后，请务必检查 [`config.toml` 的改动历史](https://github.com/reuixiy/hugo-theme-meme/commits/master/config-examples)并将相应内容也更新！
 
+
+3. 当一个 git 项目包含子模块（submodule) 时，直接克隆下来的子模块目录里面是空的。
+   
+   如果项目已经克隆到了本地，执行下面的步骤：
+   
+   ```sh
+   git submodule init
+   git submodule update
+   ```
+
+​       或者在执行 `git clone` 时加上 `--recursive` 参数。它会自动初始化并更新每一个子模块。例如：
+
+```  sh
+git clone --recursive https://github.com/example/example.git
+```
 ## Awesome MemE
 
 请看 [#2](https://github.com/reuixiy/hugo-theme-meme/issues/2)。
