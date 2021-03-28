@@ -302,7 +302,8 @@ uglyURLs = false
 
     ## 「诗意人生」
     # 诗句，支持 Markdown
-    homePoetry = ["# Hello World!"]
+    homePoetry = ["# Hello World!
+    ![今日诗词](https://v2.jinrishici.com/one.svg)"]
     # 底部链接的内间距，单位：em
     homeLinksPadding = 1
 
