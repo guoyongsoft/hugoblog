@@ -211,9 +211,9 @@ uglyURLs = false
     [[menu.main]]
         weight = 6
         identifier = "theme-switcher"
-    [[menu.main]]
-        weight = 7
-        identifier = "lang-switcher"
+    # [[menu.main]]
+    #     weight = 7
+    #     identifier = "lang-switcher"
     # [[menu.main]]
     #     weight = 8
     #     identifier = "search"
@@ -302,7 +302,7 @@ uglyURLs = false
 
     ## 「诗意人生」
     # 诗句，支持 Markdown
-    homePoetry = ["![今日诗词](https://v2.jinrishici.com/one.svg)"]
+    homePoetry = ["![今日诗词](https://v2.jinrishici.com/one.svg?font-size=30&spacing=2&color=blue)"]
     # 底部链接的内间距，单位：em
     homeLinksPadding = 1
 
