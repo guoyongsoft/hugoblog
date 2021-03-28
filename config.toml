@@ -202,12 +202,12 @@ uglyURLs = false
         weight = 4
         pre = "internal"
         post = "tags"
-    [[menu.main]]
-        url = "/about/"
-        name = "关于"
-        weight = 5
-        pre = "internal"
-        post = "user-circle"
+    # [[menu.main]]
+    #     url = "/about/"
+    #     name = "关于"
+    #     weight = 5
+    #     pre = "internal"
+    #     post = "user-circle"
     [[menu.main]]
         weight = 6
         identifier = "theme-switcher"
@@ -302,7 +302,8 @@ uglyURLs = false
 
     ## 「诗意人生」
     # 诗句，支持 Markdown
-    homePoetry = ["![今日诗词](https://v2.jinrishici.com/one.svg?font-size=30&spacing=2&color=blue)"]
+    homePoetry = ["# Hello World","![今日诗词](https://v2.jinrishici.com/one.svg?font-size=30&spacing=2&color=blue)"]
+    
     # 底部链接的内间距，单位：em
     homeLinksPadding = 1
 
