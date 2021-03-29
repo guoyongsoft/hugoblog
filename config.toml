@@ -208,9 +208,9 @@ uglyURLs = false
     #     weight = 5
     #     pre = "internal"
     #     post = "user-circle"
-    [[menu.main]]
-        weight = 6
-        identifier = "theme-switcher"
+    # [[menu.main]]
+    #     weight = 6
+    #     identifier = "theme-switcher"
     # [[menu.main]]
     #     weight = 7
     #     identifier = "lang-switcher"
@@ -476,16 +476,16 @@ uglyURLs = false
     # 深色模式
 
     # 是否开启
-    enableDarkMode = true
+    enableDarkMode = false
 
     # 默认模式
     defaultTheme = "light"
     # 说明：light（浅色模式）或 dark（深色模式）
 
     # 是否隐藏模式切换开关
-    hideThemeToggle = false
+    hideThemeToggle = true
     # 是否在首页隐藏模式切换开关
-    hideThemeToggleInHome = false
+    hideThemeToggleInHome = true
     # 说明：如果开启了深色模式，即使你隐藏了开关，
     #      你的读者依然可能以深色模式阅读你的博
     #      客，如果该读者的系统设置为深色模式的
