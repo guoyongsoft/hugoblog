@@ -585,7 +585,7 @@ uglyURLs = false
     # 说明：仅在生产环境（production）下渲染
 
     # 是否开启（全局设置）
-    enableComments = true
+    enableComments = false
     # 说明：文章的 Front Matter 中的 `comments`
     #      的优先级高于此处
 
@@ -615,7 +615,7 @@ uglyURLs = false
     # 说明：https://valine.js.org/
 
     ## Utterances
-    enableUtterances = true
+    enableUtterances = false
     utterancesRepo = "guoyongsoft/hugoblogtalks"
     utterancesIssueTerm = "pathname"
     utterancesTheme = "github-light"
@@ -1212,7 +1212,7 @@ uglyURLs = false
     #      https://busuanzi.ibruce.info/
 
     # 社交链接
-    enableSocials = true
+    enableSocials = false
     # 说明：见 data/Socials.toml
 
 
