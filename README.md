@@ -1,2 +1,2 @@
 # hugoblog
-1
+2
